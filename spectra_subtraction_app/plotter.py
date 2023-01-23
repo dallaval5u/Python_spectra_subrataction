@@ -2,8 +2,8 @@ import logging
 from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from foo import helpers
-from foo.datahandler import Region
+from spectra_subtraction_app import helpers
+from spectra_subtraction_app.datahandler import Region
 # import helpers
 
 plotter_logger = logging.getLogger("spectra_subtraction_app.plotter")  # Creating child logger

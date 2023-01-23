@@ -10,7 +10,7 @@ import csv
 import pandas as pd
 import numpy as np
 
-from foo import helpers
+from spectra_subtraction_app import helpers
 
 datahandler_logger = logging.getLogger("spectra_subtraction_app.datahandler")  # Creating child logger
 

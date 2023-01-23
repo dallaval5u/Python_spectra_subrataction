@@ -1,6 +1,6 @@
-from foo.datahandler import RegionsCollection, Region
-from foo.fitter import Fitter, Peak
-from foo import helpers, plotter
+from spectra_subtraction_app.datahandler import RegionsCollection, Region
+from spectra_subtraction_app.fitter import Fitter, Peak
+from spectra_subtraction_app import helpers, plotter
 
 __appname__ = "SpecQP"
 __version__ = "0.1"

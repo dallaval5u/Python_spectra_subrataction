@@ -1,7 +1,7 @@
 import os
 import logging
 # from helpers import is_iterable
-from foo.helpers import is_iterable
+from spectra_subtraction_app.helpers import is_iterable
 
 service_logger = logging.getLogger("spectra_subtraction_app.service")  # Configuring child logger
 

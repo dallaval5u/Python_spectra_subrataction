@@ -23,12 +23,12 @@ from matplotlib.backend_bases import key_press_handler
 import matplotlib.image as mpimg
 import matplotlib.animation as animation
 
-from foo import service
-from foo import datahandler
-from foo import plotter
-from foo import helpers
-from foo import fitter
-from foo.globalfitter import GlobalFit
+from spectra_subtraction_app import service
+from spectra_subtraction_app import datahandler
+from spectra_subtraction_app import plotter
+from spectra_subtraction_app import helpers
+from spectra_subtraction_app import fitter
+from spectra_subtraction_app.globalfitter import GlobalFit
 
 # Default font for the GUI
 #LARGE_FONT = ("Verdana", "52")

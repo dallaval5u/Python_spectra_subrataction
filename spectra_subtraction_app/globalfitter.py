@@ -4,8 +4,8 @@ import logging
 import numpy as np
 from lmfit import Parameters, minimize
 
-from foo import helpers
-from foo.fitter import Fitter, Peak
+from spectra_subtraction_app import helpers
+from spectra_subtraction_app.fitter import Fitter, Peak
 
 globalfitter_logger = logging.getLogger("spectra_subtraction_app.globalfitter")  # Creating child logger
 

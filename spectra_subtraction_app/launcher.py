@@ -5,8 +5,8 @@ from logging.handlers import RotatingFileHandler
 
 # import service
 # from gui import main as call_gui
-from foo import service
-from foo.gui import main as call_gui
+from spectra_subtraction_app import service
+from spectra_subtraction_app.gui import main as call_gui
 
 
 specqp_logger = logging.getLogger("spectra_subtraction_app")
