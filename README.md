@@ -1,4 +1,4 @@
-# Python_spectra_subrataction
+# Python_spectra_subtraction_app
 App to subtract or add spectra (for now only read csv files)
 
 To install open a terminal and type git clone https://github.com/dallaval5u/Python_spectra_subrataction.git
