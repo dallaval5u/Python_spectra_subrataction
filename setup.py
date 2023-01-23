@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
-#with open("README.md", "r") as f:
-#    long_description = f.read()
+with open("README.md", "r") as f:
+    long_description = f.read()
 
 setup(
       name='specqp',
@@ -9,7 +9,7 @@ setup(
       description='Quick plotting, subtracting, and adding of spectroscopic data',
 #      long_description=long_description,
 #      long_description_content_type="text/markdown",
-      url='https://github.com/dallaval5u/TEST',
+      url='https://github.com/dallaval5u/Python_spectra_subrataction',
       author='Dallavalle Riccardo',
       author_email='dallavallericcardo@outlook.com',
       license='MIT',
