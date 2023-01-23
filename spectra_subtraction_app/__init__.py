@@ -10,6 +10,5 @@ __website__ = "https://github.com/dallaval5u/Python_spectra_subtraction_app"
 __all__ = [
         'datahandler',
         'helpers',
-        'fitter',
         'plotter'
         ]
