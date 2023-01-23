@@ -27,8 +27,6 @@ from spectra_subtraction_app import service
 from spectra_subtraction_app import datahandler
 from spectra_subtraction_app import plotter
 from spectra_subtraction_app import helpers
-from spectra_subtraction_app import fitter
-from spectra_subtraction_app.globalfitter import GlobalFit
 
 # Default font for the GUI
 #LARGE_FONT = ("Verdana", "52")
