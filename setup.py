@@ -4,11 +4,11 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 setup(
-      name='specqp',
+      name='spectra_subtraction_app',
       version='1.1.5',
       description='Quick plotting, subtracting, and adding of spectroscopic data',
-#      long_description=long_description,
-#      long_description_content_type="text/markdown",
+      long_description=long_description,
+      long_description_content_type="text/markdown",
       url='https://github.com/dallaval5u/Python_spectra_subtraction_app',
       author='Dallavalle Riccardo',
       author_email='dallavallericcardo@outlook.com',
