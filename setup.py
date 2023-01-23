@@ -9,7 +9,7 @@ setup(
       description='Quick plotting, subtracting, and adding of spectroscopic data',
 #      long_description=long_description,
 #      long_description_content_type="text/markdown",
-      url='https://github.com/dallaval5u/Python_spectra_subrataction',
+      url='https://github.com/dallaval5u/Python_spectra_subtraction_app',
       author='Dallavalle Riccardo',
       author_email='dallavallericcardo@outlook.com',
       license='MIT',
