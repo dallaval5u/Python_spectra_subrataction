@@ -1,5 +1,4 @@
 from spectra_subtraction_app.datahandler import RegionsCollection, Region
-from spectra_subtraction_app.fitter import Fitter, Peak
 from spectra_subtraction_app import helpers, plotter
 
 __appname__ = "spectra_subtraction_app"
