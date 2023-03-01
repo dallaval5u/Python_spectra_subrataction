@@ -10,9 +10,9 @@ import csv
 import pandas as pd
 import numpy as np
 
-from specqp import helpers
+from spectra_subtraction_app import helpers
 
-datahandler_logger = logging.getLogger("specqp.datahandler")  # Creating child logger
+datahandler_logger = logging.getLogger("spectra_subtraction_app.datahandler")  # Creating child logger
 
 DATA_FILE_TYPES = (
     "scienta",
