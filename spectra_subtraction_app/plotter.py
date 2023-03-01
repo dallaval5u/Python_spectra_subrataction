@@ -6,10 +6,10 @@ from matplotlib.widgets import Slider, Button
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.ndimage.interpolation import shift
-from specqp import helpers
-from specqp.datahandler import Region
+from spectra_subtraction_app import helpers
+from spectra_subtraction_app.datahandler import Region
 # import helpers
-from specqp import datahandler
+from spectra_subtraction_app import datahandler
 
 plotter_logger = logging.getLogger("specqp.plotter")  # Creating child logger
 
