@@ -26,12 +26,12 @@ import matplotlib.image as mpimg
 import matplotlib.animation as animation
 from matplotlib.widgets import Slider
 
-from specqp import service
-from specqp import datahandler
-from specqp import plotter
-from specqp import helpers
-from specqp import fitter
-from specqp.globalfitter import GlobalFit
+from spectra_subtraction_app import service
+from spectra_subtraction_app import datahandler
+from spectra_subtraction_app import plotter
+from spectra_subtraction_app import helpers
+from spectra_subtraction_app import fitter
+from spectra_subtraction_app.globalfitter import GlobalFit
 
 # Default font for the GUI
 #LARGE_FONT = ("Verdana", "52")
