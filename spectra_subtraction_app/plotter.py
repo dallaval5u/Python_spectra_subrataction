@@ -1,14 +1,32 @@
 import logging
+
+import numpy as np
 from matplotlib.figure import Figure
+from matplotlib.widgets import Slider, Button
+import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-
-from spectra_subtraction_app import helpers
-from spectra_subtraction_app.datahandler import Region
+from scipy.ndimage.interpolation import shift
+from specqp import helpers
+from specqp.datahandler import Region
 # import helpers
+from specqp import datahandler
 
-plotter_logger = logging.getLogger("spectra_subtraction_app.plotter")  # Creating child logger
+plotter_logger = logging.getLogger("specqp.plotter")  # Creating child logger
 
 
+class Counter():
+    def __init__(self):
+        self.counter = 0
+
+    def increment(self):
+        self.counter += 1
+
+    def get_value(self):
+        return self.counter
+
+a = Counter()
+test_spectra = []
+test_spectra2 = []
 def _get_arrays(region, x_data='energy', y_data='final'):
     """
     :param region: Region object
@@ -18,6 +36,7 @@ def _get_arrays(region, x_data='energy', y_data='final'):
     """
     if x_data in list(region.get_data()):
         x = region.get_data(column=x_data)
+        print(x)
     else:
         x = region.get_data(column='energy')
     if y_data in list(region.get_data()):
@@ -140,23 +159,33 @@ def plot_add_dimension(region, axs, x_data='energy', y_data='final', invert_x=Tr
                     legend=legend, legend_features=legend_features, legend_pos=legend_pos)
 
 
-def plot_region(region, axs, x_data='energy', y_data='final', invert_x=True, log_scale=False, x_offset=0,
-                y_offset=0, scatter=False, label=None, color=None, title=True, font_size=12,
+def plot_region(region, counter, axs, x_data='energy', y_data='final', invert_x=True, log_scale=False, x_offset=0,
+                y_offset=0, scale=0, scatter=False, label=None, color=None, title=True, font_size=12,
                 legend=True, legend_features=None, legend_pos='best'):
     """Plotting spectrum with matplotlib using given axes and a number of optional arguments. legend_features parameter
     allows for adding distinguishing features to each plotted curve taking their values from Region._conditions.
     Example: legend_features=('Temperature',)
     """
+    #print('my axs')
+    #print(axs)
     x, y = _get_arrays(region, x_data, y_data)
-    _plot_curve(x, y, region, axs, invert_x=invert_x, log_scale=log_scale, x_offset=x_offset,
-                y_offset=y_offset, scatter=scatter, label=label, color=color, title=title, font_size=font_size,
-                legend=legend, legend_features=legend_features, legend_pos=legend_pos)
+    #print(y)
+    _plot_curve(x, y, counter, region, axs, invert_x=invert_x, log_scale=log_scale, x_offset=x_offset,
+                y_offset=y_offset,scale =scale, scatter=scatter, label=label, color=color, title=title, font_size=font_size,
+                legend=legend, legend_features=legend_features, legend_pos=legend_pos)  #TODO divide y by 100 and take the previous slider in
+    #print('this is value of scale and offset inside plot region')
+    #print(scale)
+    #print(x_offset)
 
-
-def _plot_curve(x, y, region, axs, invert_x=True, log_scale=False, x_offset=0.0,
-                y_offset=0.0, scatter=False, label=None, color=None, title=True, font_size=12,
+def _plot_curve(x, y, counter, region, axs, invert_x=True, log_scale=False, x_offset=0.0,
+                y_offset=0.0, scale=0.0, scatter=False, label=None, color=None, title=True, font_size=12,
                 legend=True, legend_features=None, legend_pos='best'):
 
+    a.increment()
+    #print('this is a')
+    #print(a.get_value())
+    #print('this is y offset')
+    #print(y_offset)
     if label is None:
         label = _make_label(region, legend_features=legend_features)
         label = _make_label(region, legend_features=legend_features)
@@ -164,9 +193,53 @@ def _plot_curve(x, y, region, axs, invert_x=True, log_scale=False, x_offset=0.0,
     if not bool(label):
         label = " "
     if scatter:
+        #print('absolutely wrong to go here')
         axs.scatter(x, y + y_offset, s=7, c=color, label=label)
-    else:
+    elif a.get_value() % 2 !=0:
+        #print('I should not go here')
         axs.plot(x + x_offset, y + y_offset, color=color, label=label)
+        test_spectra.append(x)
+        test_spectra.append(y)
+        test_spectra2.append(x+x_offset)
+        #print('this is my test spectra')
+        #print(test_spectra)
+        #print('this was x')
+        #print(test_spectra[0])
+        #print('this was y')
+        #print(test_spectra[1])
+        #print('finished test')
+        #print('this is x size')
+        #print(len(test_spectra[0]))
+    else:
+        #print('this is my scaling factor')
+        #print(scale)
+        print('size X, Y1, Y2:', np.size(x), np.size(test_spectra), np.size(y))
+        ciao = x + x_offset
+        print('THIS IS X:', x, x_offset)
+        print('AND this is my offsetted x AXEs:', ciao)
+        # intersezione = np.intersect1d(ciao, x)
+        intersezione = [value for value in np.around(ciao, 2) if value in np.around(x, 2)]
+        print('QUESTA è L INTERSEZIONE', intersezione, len(intersezione))
+        # sub_y_axis = y[-len(intersezione):]
+        # axs.plot(x + x_offset, test_spectra[1] - y*scale - y_offset, color=color,label='Subtraction_New')
+        if x_offset>0 or x_offset ==0:
+            axs.plot(intersezione, test_spectra[1][-len(intersezione):] - (y * scale)[:len(intersezione)] - y_offset,
+                    color=color, label='Subtraction')  # TODO: play with the second subplot (put a slider)
+        else:
+            axs.plot(intersezione, ((y * scale)[:len(intersezione)] - y_offset) - test_spectra[1][-len(intersezione):] ,
+                    color=color, label='Subtraction')  # TODO: play with the second subplot (put a slider)
+        # TS = test_spectra[1][-len(intersezione):]
+        # print('TS e TS inters', test_spectra[1], TS)
+        print('TESTSPECTRA:', test_spectra[1])
+        print('AND THIS IS THE X INTERESCTION', intersezione)
+        # - (y * scale)[:len(intersezione)] - y_offset
+        #print('X_OFFSET=')
+        #print(x_offset)
+        #y_shifted = shift(y, x_offset, cval=0)
+        if legend:
+            axs.plot(x + x_offset, y * scale + y_offset, color=color, label=label)
+
+
     axs.tick_params(axis='both', which='both', labelsize=font_size)
     if legend:
         if legend_pos == 'lower center':
@@ -206,6 +279,17 @@ def _plot_curve(x, y, region, axs, invert_x=True, log_scale=False, x_offset=0.0,
     if max(y) > 9999:
         axs.ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
 
+    ## Test slider functionality
+    #fig, ax = plt.subplots()
+    #axfreq = fig.add_axes([0.25, 0.1, 0.65, 0.03])
+    #freq_slider = Slider(
+    #    ax=axfreq,
+    #    label='Frequency [Hz]',
+    #    valmin=0.1,
+    #    valmax=30,
+    #    valinit=15,
+    #)
+    #plt.show()
 
 def plot_peak(peak, axs, y_offset=0.0, label=None, color=None, fill=True, legend=True, legend_pos='best', font_size=12):
     """
