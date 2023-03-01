@@ -9,4 +9,3 @@ then install with python setup.py install
 
 Finally, to run the app type python -m spectra_subtraction_app.launcher
 
-Note: this is still an Alpha. This app is based on the work of the user Shipilin (specqp)
