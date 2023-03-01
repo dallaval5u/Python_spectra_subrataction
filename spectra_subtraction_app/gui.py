@@ -5,12 +5,14 @@ import re
 import datetime
 import ntpath
 import logging
+import time #testing
 import webbrowser
 
 import pandas as pd
 import numpy as np
 
 import tkinter as tk
+from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog, simpledialog, messagebox
 
@@ -22,13 +24,14 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.backend_bases import key_press_handler
 import matplotlib.image as mpimg
 import matplotlib.animation as animation
+from matplotlib.widgets import Slider
 
-from spectra_subtraction_app import service
-from spectra_subtraction_app import datahandler
-from spectra_subtraction_app import plotter
-from spectra_subtraction_app import helpers
-from spectra_subtraction_app import fitter
-from spectra_subtraction_app.globalfitter import GlobalFit
+from specqp import service
+from specqp import datahandler
+from specqp import plotter
+from specqp import helpers
+from specqp import fitter
+from specqp.globalfitter import GlobalFit
 
 # Default font for the GUI
 #LARGE_FONT = ("Verdana", "52")
@@ -36,7 +39,7 @@ from spectra_subtraction_app.globalfitter import GlobalFit
 #COLORS = ['gray', 'navy', 'blue', 'turquoise', 'cyan', 'aquamarine', 'green', 'khaki', 'yellow', 'gold',
 #          'goldenrod', 'salmon', 'orange', 'coral', 'tomato', 'red', 'pink', 'maroon', 'purple', 'thistle']
 
-guxxi_logger = logging.getLogger("spectra_subtraction_app.gui")  # Creating child logger
+guxxi_logger = logging.getLogger("specqp.gui")  # Creating child logger
 matplotlib.use('TkAgg')  # Configuring matplotlib interaction with tkinter
 style.use('ggplot')  # Configuring matplotlib style
 
@@ -260,13 +263,13 @@ class BrowserPanel(ttk.Frame):
         self.buttons_panel = ttk.Frame(self, borderwidth=1, relief="groove")
         # Action buttons
         self.load_label = ttk.Label(self.buttons_panel,
-                                    text="Load csv File", anchor=tk.W)
+                                    text="Load Spectra", anchor=tk.W)
         self.load_label.pack(side=tk.TOP, fill=tk.X)
         #self.add_sc_file_button = ttk.Button(self.buttons_panel,
         #                                     text='Load SCIENTA', command=self._ask_load_scienta_file)
         #self.add_sc_file_button.pack(side=tk.TOP, fill=tk.X)
         self.add_sp_file_button = ttk.Button(self.buttons_panel,
-                                             text='Load csv File', command=self._ask_load_specs_file)
+                                             text='Load Spectra', command=self._ask_load_specs_file)
         self.add_sp_file_button.pack(side=tk.TOP, fill=tk.X)
         self.blank_label = ttk.Label(self.buttons_panel,
                                      text="", anchor=tk.W)
@@ -288,8 +291,8 @@ class BrowserPanel(ttk.Frame):
     def _quit(self):
         self.winfo_toplevel().quit()  # stops mainloop
 
-
 class PlotPanel(ttk.Frame):
+    counter = 1 ### this is needed
     def __init__(self, parent, label=None, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.figure = plotter.SpecqpPlot(dpi=100)
@@ -316,6 +319,8 @@ class PlotPanel(ttk.Frame):
     # def _on_mouse_click(self, event):
     #     gui_logger.debug(f"{event.button} pressed on plot canvas")
     #     key_press_handler(event, self.canvas, self.toolbar)
+
+
 
     def plot_fit(self, reg, fobj, ymin=None, ymax=None, region_color=None, colors=None, fill=True, residuals=None,
                  fitline="True", bg="", ax=None, legend_feature=("ID",), legend_pos='best', title=False, font_size=12):
@@ -375,8 +380,8 @@ class PlotPanel(ttk.Frame):
         self.canvas.draw()
         self.toolbar.update()
 
-    def plot_regions(self, regions, ax=None, x_data='energy', y_data='final', ymin=None, ymax=None, log_scale=False,
-                     x_offset=0.0, y_offset=0.0, scatter=False, plot2D=False, label=None, color=None, title=True, font_size=12,
+    def plot_regions(self, regions, counter, ax=None, x_data='energy', y_data='final', ymin=None, ymax=None, log_scale=False,
+                     x_offset=0.0, y_offset=0.0, scale=0.0, scatter=False, plot2D=False, label=None, color=None, title=True, font_size=12,
                      legend=True, legend_features=("ID", ), legend_pos='best', add_dimension=False, colormap=None):
         if regions:
             if not helpers.is_iterable(regions):
@@ -384,6 +389,7 @@ class PlotPanel(ttk.Frame):
             if not ax:
                 ax = self.figure_axes
             ax.clear()
+
             if colormap:  # Calculate number of colors needed to plot all curves
                 num_colors = 0
                 for region in regions:
@@ -401,14 +407,14 @@ class PlotPanel(ttk.Frame):
                 invert_x = False
             for region in regions:
                 if not add_dimension or not region.is_add_dimension():
-                    plotter.plot_region(region, ax, x_data=x_data, y_data=y_data, invert_x=invert_x, log_scale=log_scale,
-                                        x_offset=offset, y_offset=offset2, scatter=scatter, label=label, color=color, title=title,
+                    plotter.plot_region(region, counter, ax,  x_data=x_data, y_data=y_data, invert_x=invert_x, log_scale=log_scale,
+                                        x_offset=offset, y_offset=offset2, scale=scale, scatter=scatter, label=label, color=color, title=title,
                                         font_size=font_size, legend=legend, legend_features=legend_features,
                                         legend_pos=legend_pos)
                     offset += x_offset
                     offset2 += y_offset
                 else:
-                    plotter.plot_add_dimension(region, ax, x_data=x_data, y_data=y_data, invert_x=invert_x, log_scale=log_scale,
+                    plotter.plot_add_dimension(region, ax, counter=self.counter, x_data=x_data, y_data=y_data, invert_x=invert_x, log_scale=log_scale,
                                                x_offset=x_offset, y_offset=offset2, global_y_offset=offset, scatter=scatter, label=label,
                                                color=color, title=title, font_size=font_size, legend=legend,
                                                legend_features=legend_features, legend_pos=legend_pos, plot2D=plot2D,
@@ -422,6 +428,10 @@ class PlotPanel(ttk.Frame):
             ax.set_aspect(float(service.get_service_parameter("PLOT_ASPECT_RATIO"))/ax.get_data_ratio())
             self.canvas.draw()
             self.toolbar.update()
+
+
+
+
 
     def plot_trends(self, x, areas, ax=None, ymin=None, ymax=None, log_scale=False, y_offset=0.0, scatter=False,
                     labels=None, colors=None, font_size=12, legend=True, legend_pos='best'):
@@ -463,6 +473,7 @@ class CorrectionsPanel(ttk.Frame):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.winfo_toplevel().gui_widgets["CorrectionsPanel"] = self
+        self.counter = 1
         self.regions_in_work = None
         # Adding widgets to settings two-columns section
         self._make_settings_subframe()
@@ -610,7 +621,7 @@ class CorrectionsPanel(ttk.Frame):
                     self.winfo_toplevel().display_message("Check 'Normalize by const(s)' value. Must be a number or a sequence separated by ';'.")
                     return
 
-            if self.plot_use_settings_var.get():
+            if 1==1:#self.plot_use_settings_var.get():
                 service.set_init_parameters(["PHOTON_ENERGY", "ENERGY_SHIFT"],
                                             ["; ".join([str(s) for s in pe]), "; ".join([str(s) for s in es])])
                 service.set_init_parameters("NORMALIZATION_CONSTANT", "; ".join([str(s) for s in nc]))
@@ -760,6 +771,7 @@ class CorrectionsPanel(ttk.Frame):
         # Plot name label
         self.plotting_label = ttk.Label(self, text="Plotting", anchor=tk.W)
         self.plotting_label.pack(side=tk.TOP, fill=tk.X)
+
         # Initializing two-columns section
         self.plotting_two_columns = ttk.Frame(self)
         self.plotting_left_column = ttk.Frame(self.plotting_two_columns, width=self.settings_left_column.winfo_width())
@@ -786,6 +798,8 @@ class CorrectionsPanel(ttk.Frame):
         #                                        )
         #self.reverse_box.pack(side=tk.LEFT, anchor=tk.W)
         reorder_panel.pack(side=tk.TOP, anchor=tk.W, fill=tk.X, expand=True)
+
+
         # Plot in new window checkbox
         self.plot_separate_label = ttk.Label(self.plotting_left_column, text="Plot in new window", anchor=tk.W)
         self.plot_separate_label.pack(side=tk.TOP, fill=tk.X, expand=True)
@@ -839,14 +853,20 @@ class CorrectionsPanel(ttk.Frame):
         #self.drop_last_bin_box.pack(side=tk.LEFT, anchor=tk.W)
         #bins_panel.pack(side=tk.TOP, anchor=tk.W, fill=tk.X, expand=True)
         # Use settings
-        self.plot_use_settings_label = ttk.Label(self.plotting_left_column, text="Use settings", anchor=tk.W)
-        self.plot_use_settings_label.pack(side=tk.TOP, fill=tk.X, expand=True)
-        self.plot_use_settings_var = tk.StringVar(value="True")
-        self.plot_use_settings_box = tk.Checkbutton(self.plotting_right_column, var=self.plot_use_settings_var,
-                                                    onvalue="True", offvalue="", background=BG,
-                                                    anchor=tk.W, relief=tk.FLAT, highlightthickness=0,
-                                                    command=self._toggle_settings)
-        self.plot_use_settings_box.pack(side=tk.TOP, anchor=tk.W)
+        #self.plot_use_settings_label = ttk.Label(self.plotting_left_column, text="Use settings", anchor=tk.W)
+        #self.plot_use_settings_label.pack(side=tk.TOP, fill=tk.X, expand=True)
+        #self.plot_use_settings_var = tk.StringVar(value="True")
+        #self.plot_use_settings_box = tk.Checkbutton(self.plotting_right_column, var=self.plot_use_settings_var,
+        #                                            onvalue="True", offvalue="", background=BG,
+        #                                            anchor=tk.W, relief=tk.FLAT, highlightthickness=0,
+        #                                            command=self._toggle_settings)
+        #self.plot_use_settings_box.pack(side=tk.TOP, anchor=tk.W)
+
+
+        #White space
+        self.offset_space2 = ttk.Label(self.plotting_right_column, text="", anchor=tk.W)
+        self.offset_space2.pack(side=tk.TOP, fill=tk.Y, expand=True)
+
         # Binding energy axis
         self.energy_axis_label = ttk.Label(self.plotting_left_column, text="Energy axis", anchor=tk.W)
         self.energy_axis_label.pack(side=tk.TOP, fill=tk.X, expand=True)
@@ -873,46 +893,77 @@ class CorrectionsPanel(ttk.Frame):
                                                )
         self.plot_kinetic_box.pack(side=tk.LEFT, anchor=tk.W)
         energy_axis_frame.pack(side=tk.TOP, anchor=tk.W, fill=tk.X, expand=True)
+        # White space
+        self.offset_space3 = ttk.Label(self.plotting_left_column, text="", anchor=tk.W)
+        self.offset_space3.pack(side=tk.TOP, fill=tk.Y, expand=True)
+
+        #White space
+        self.offset_space2 = ttk.Label(self.plotting_right_column, text="", anchor=tk.W)
+        self.offset_space2.pack(side=tk.TOP, fill=tk.Y, expand=True)
+        #White space
+        self.offset_space2 = ttk.Label(self.plotting_right_column, text="", anchor=tk.W)
+        self.offset_space2.pack(side=tk.TOP, fill=tk.Y, expand=True)
+
         # Offset
         self.offset_label = ttk.Label(self.plotting_left_column, text="Y Offset", anchor=tk.W)
         self.offset_label.pack(side=tk.TOP, fill=tk.X, expand=True)
         self.offset_subframe = ttk.Frame(self.plotting_right_column)
         self.offset_value_var = tk.IntVar(self, value=0)
         self.offset_value_entry = ttk.Entry(self.offset_subframe, textvariable=self.offset_value_var,
-                                            width=3, state=tk.DISABLED, style='default.TEntry')
-        self.offset_slider = ttk.Scale(self.offset_subframe, from_=0, to=100, orient=tk.HORIZONTAL,
-                                       command=lambda x: self.offset_value_var.set(int(float(x))))
-        self.offset_slider.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        self.offset_value_entry.pack(side=tk.LEFT, expand=False)
+                                            width=6, state=tk.DISABLED, style='default.TEntry')
+        self.offset_slider = ttk.Scale(self.offset_subframe, from_=-50, to=50, orient=tk.HORIZONTAL,
+                                       command=lambda x: [self.offset_value_var.set(round(float(x),2)),self._plot()])#lambda x: self.offset_value_var.set(int(float(x))))
+        self.offset_slider.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.offset_value_entry.pack(side=tk.RIGHT, expand=False)
         self.offset_subframe.pack(side=tk.TOP, fill=tk.X, expand=False)
 
-
+        #White space
+        self.offset_space2 = ttk.Label(self.plotting_left_column, text="", anchor=tk.W)
+        self.offset_space2.pack(side=tk.TOP, fill=tk.Y, expand=True)
         # Offset 2
         self.offset_label2 = ttk.Label(self.plotting_left_column, text="X Offset", anchor=tk.W)
-        self.offset_label2.pack(side=tk.TOP, fill=tk.Y, expand=True)
+        self.offset_label2.pack(side=tk.TOP, fill=tk.X, expand=True)
         self.offset_subframe2 = ttk.Frame(self.plotting_right_column)
         self.offset_value_var2 = tk.IntVar(self, value=0)
-        self.offset_value_entry2 = ttk.Entry(self.offset_subframe2, textvariable=self.offset_value_var2,
-                                            width=3, state=tk.DISABLED, style='default.TEntry')
-        self.offset_slider2 = ttk.Scale(self.offset_subframe2, from_=0, to=100, orient=tk.HORIZONTAL,
-                                       command=lambda y: self.offset_value_var2.set(int(float(y))))
-        self.offset_slider2.pack(side=tk.LEFT, fill=tk.Y, expand=True)
-        self.offset_value_entry2.pack(side=tk.LEFT, expand=False)
+        self.offset_value_entry2 = ttk.Entry(self.offset_subframe2, textvariable=self.offset_value_var2, width=6, state=tk.DISABLED, style='default.TEntry')
+        self.offset_slider2 = ttk.Scale(self.offset_subframe2, length=701, from_=-300, to=301, orient=tk.HORIZONTAL,
+                                        command=lambda y: [self.offset_value_var2.set(round(float(y))), self._plot()])
+        self.offset_slider2.pack(side=tk.TOP, fill=tk.Y, expand=True)
+        self.offset_value_entry2.pack(side=tk.RIGHT, expand=False)
         self.offset_subframe2.pack(side=tk.TOP, fill=tk.Y, expand=False)
+        # White space
+        self.offset_space3 = ttk.Label(self.plotting_left_column, text="", anchor=tk.W)
+        self.offset_space3.pack(side=tk.TOP, fill=tk.Y, expand=True)
 
+        # Scale
+        self.scale_label = ttk.Label(self.plotting_left_column, text="Scaling %", anchor=tk.W)
+        self.scale_label.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.scale_subframe = ttk.Frame(self.plotting_right_column)
+        self.scale_value_var = tk.IntVar(self, value=0)
+        self.scale_value_entry = ttk.Entry(self.scale_subframe, textvariable=self.scale_value_var,
+                                            width=6, state=tk.DISABLED, style='default.TEntry')
+        self.scale_slider = ttk.Scale(self.scale_subframe, from_=0, to=150, orient=tk.HORIZONTAL,
+                                       command=lambda x: [self.scale_value_var.set(round(float(x),2)),self._plot()])#lambda x: self.offset_value_var.set(int(float(x))))
+        self.scale_slider.set(100)
+        self.scale_slider.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.scale_value_entry.pack(side=tk.RIGHT, expand=False)
+        self.scale_subframe.pack(side=tk.TOP, fill=tk.X, expand=False)
 
+        # Scatter '
+        #self.scatter_label = ttk.Label(self.plotting_left_column, text="Plot scatter", anchor=tk.W)
+        #self.scatter_label.pack(side=tk.TOP, fill=tk.X, expand=True)
+        #self.scatter_var = tk.StringVar(value="")
+        #self.scatter_box = tk.Checkbutton(self.plotting_right_column, var=self.scatter_var,
+        #                                  onvalue="True", offvalue="", background=BG,
+        #                                  anchor=tk.W, relief=tk.FLAT, highlightthickness=0
+        #                                  )
+        #self.scatter_box.pack(side=tk.TOP, anchor=tk.W)
+        # White space
+        self.offset_space3 = ttk.Label(self.plotting_left_column, text="", anchor=tk.W)
+        self.offset_space3.pack(side=tk.TOP, fill=tk.Y, expand=True)
 
-        # Scatter
-        self.scatter_label = ttk.Label(self.plotting_left_column, text="Plot scatter", anchor=tk.W)
-        self.scatter_label.pack(side=tk.TOP, fill=tk.X, expand=True)
-        self.scatter_var = tk.StringVar(value="")
-        self.scatter_box = tk.Checkbutton(self.plotting_right_column, var=self.scatter_var,
-                                          onvalue="True", offvalue="", background=BG,
-                                          anchor=tk.W, relief=tk.FLAT, highlightthickness=0
-                                          )
-        self.scatter_box.pack(side=tk.TOP, anchor=tk.W)
         # Legend
-        self.plot_legend_label = ttk.Label(self.plotting_left_column, text="Add legend", anchor=tk.W)
+        self.plot_legend_label = ttk.Label(self.plotting_left_column, text="Show last spectra", anchor=tk.W)
         self.plot_legend_label.pack(side=tk.TOP, fill=tk.X, expand=True)
         legend_boxes = ttk.Frame(self.plotting_right_column)
         self.plot_legend_var = tk.StringVar(value="True")
@@ -924,14 +975,14 @@ class CorrectionsPanel(ttk.Frame):
         self.plot_legend_box.pack(side=tk.LEFT, anchor=tk.W)
         init_legend_settings = service.get_service_parameter("LEGEND").split(';')
         # File name in the legend
-        fn_label = ttk.Label(legend_boxes, text="FN", anchor=tk.W)
+        fn_label = ttk.Label(legend_boxes, text="", anchor=tk.W)
         fn_label.pack(side=tk.LEFT, fill=tk.X, anchor=tk.W)
         self.plot_legend_fn_var = tk.StringVar(value=init_legend_settings[0].strip())
         self.plot_legend_fn_box = tk.Checkbutton(legend_boxes, var=self.plot_legend_fn_var,
                                               onvalue="True", offvalue="", background=BG,
                                               anchor=tk.W, relief=tk.FLAT, highlightthickness=0
                                               )
-        self.plot_legend_fn_box.pack(side=tk.LEFT, anchor=tk.W)
+        #self.plot_legend_fn_box.pack(side=tk.LEFT, anchor=tk.W)
             # Region name in the legend
         #rn_label = ttk.Label(legend_boxes, text="RN", anchor=tk.W)
         #rn_label.pack(side=tk.LEFT, fill=tk.X, anchor=tk.W)
@@ -980,8 +1031,8 @@ class CorrectionsPanel(ttk.Frame):
 
     def _make_settings_subframe(self):
         # Settings name label
-        self.settings_label = ttk.Label(self, text="Settings", anchor=tk.W)
-        self.settings_label.pack(side=tk.TOP, fill=tk.X)
+        #self.settings_label = ttk.Label(self, text="Settings", anchor=tk.W)
+        #self.settings_label.pack(side=tk.TOP, fill=tk.X)
         # Initializing two-columns section
         self.settings_two_columns = ttk.Frame(self)
         self.settings_left_column = ttk.Frame(self.settings_two_columns)
@@ -1056,15 +1107,15 @@ class CorrectionsPanel(ttk.Frame):
         #self.crop_right_entry.pack(side=tk.RIGHT, expand=False)
         #crop_entries_frame.pack(side=tk.TOP, expand=False, anchor=tk.W)
         # Subtract constant background
-        self.subtract_const_label = ttk.Label(self.settings_left_column, text="Subtract constant bg", anchor=tk.W)
-        self.subtract_const_label.pack(side=tk.TOP, fill=tk.X, expand=True)
+        #self.subtract_const_label = ttk.Label(self.settings_left_column, text="Subtract constant bg", anchor=tk.W)
+        #self.subtract_const_label.pack(side=tk.TOP, fill=tk.X, expand=True)
         self.subtract_const_var = tk.StringVar(value="")
-        self.subtract_const_box = tk.Checkbutton(self.settings_right_column, var=self.subtract_const_var,
-                                                 onvalue="True", offvalue="", background=BG,
-                                                 anchor=tk.W, relief=tk.FLAT, highlightthickness=0,
-                                                 command=self._toggle_subtract_bg
-                                                 )
-        self.subtract_const_box.pack(side=tk.TOP, anchor=tk.W)
+        #self.subtract_const_box = tk.Checkbutton(self.settings_right_column, var=self.subtract_const_var,
+        #                                         onvalue="True", offvalue="", background=BG,
+        #                                         anchor=tk.W, relief=tk.FLAT, highlightthickness=0,
+        #                                         command=self._toggle_subtract_bg
+        #                                         )
+        #self.subtract_const_box.pack(side=tk.TOP, anchor=tk.W)
         # Subtract Shirley background
         #self.subtract_shirley_label = ttk.Label(self.settings_left_column, text="Subtract Shirley bg", anchor=tk.W)
         #self.subtract_shirley_label.pack(side=tk.TOP, fill=tk.X, expand=True)
@@ -1079,43 +1130,46 @@ class CorrectionsPanel(ttk.Frame):
         self.settings_left_column.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
         self.settings_right_column.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         self.settings_two_columns.pack(side=tk.TOP, fill=tk.X, expand=False)
-
-    def _plot(self):
+    ###function made by me
+    
+    def _plot2(self):
         self.regions_in_work = self._get_regions_in_work()
         if not self.regions_in_work:
             return
         legend_options = ";".join([self.plot_legend_fn_var.get()])#, self.plot_legend_rn_var.get(), self.plot_legend_con_var.get()])
         service.set_init_parameters("LEGEND", legend_options)
-        offset = (self.offset_slider2.get() / 1000000) * max([np.max(region.get_data(column='final'))
-                                                         for region in self.regions_in_work if
-                                                         len(region.get_data(column='final')) > 0])
-        offset2 = (self.offset_slider.get() / 100) * max([np.max(region.get_data(column='final'))
-                                                         for region in self.regions_in_work if
-                                                         len(region.get_data(column='final')) > 0])
+        offset = self.offset_slider.get()/100 #(x / 1000000) * max([np.max(region.get_data(column='final'))
+                    #                                     for region in self.regions_in_work if
+                     #                                    len(region.get_data(column='final')) > 0])
+        print(self.offset_slider.get())
+        offset2 = self.offset_slider2.get()* 100#(x / 100) * max([np.max(region.get_data(column='final'))
+                     #                                    for region in self.regions_in_work if
+                      #                                   len(region.get_data(column='final')) > 0])
+        print(offset2)
         cmap = None if self.select_colormap.get() == "Default colormap" else self.select_colormap.get()
         legend_features = self._get_legend_features()
-
         plot_add_dim = bool(self.plot_add_dim_var.get())
         plot_2D = bool(self.plot_2D_var.get())
-        plot_scatter = bool(self.scatter_var.get())
-        if plot_scatter and plot_2D and plot_add_dim and len(self.regions_in_work) == 1:
-            self.winfo_toplevel().display_message("Choose either 'scatter' or '2D plot' mode.")
-            return
-        elif plot_scatter and plot_2D and (not plot_add_dim or len(self.regions_in_work) > 1):
-            plot_2D = False
-        elif plot_add_dim and plot_2D and len(self.regions_in_work) > 1:
-            self.winfo_toplevel().display_message("Can't make 2D plot for more than 1 scan at the same time.")
-            plot_2D = False
-        elif not plot_add_dim:
+        #plot_scatter = bool(self.scatter_var.get())
+        #if plot_scatter and plot_2D and plot_add_dim and len(self.regions_in_work) == 1:
+        #    self.winfo_toplevel().display_message("Choose either 'scatter' or '2D plot' mode.")
+        #    return
+        #elif plot_scatter and plot_2D and (not plot_add_dim or len(self.regions_in_work) > 1):
+        #    plot_2D = False
+        #elif plot_add_dim and plot_2D and len(self.regions_in_work) > 1:
+        #    self.winfo_toplevel().display_message("Can't make 2D plot for more than 1 scan at the same time.")
+        #    plot_2D = False
+        if not plot_add_dim:
             plot_2D = False
         if bool(self.plot_separate_var.get()):
             new_plot_window = tk.Toplevel(self.winfo_toplevel())
-            new_plot_window.wm_title("Raw data")
+            new_plot_window.wm_title("New Window")
             new_plot_panel = PlotPanel(new_plot_window, label=None, borderwidth=1, relief="groove")
             new_plot_panel.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
             new_plot_panel.plot_regions(self.regions_in_work,
                                         add_dimension=plot_add_dim,
-                                        scatter=plot_scatter,
+                                        counter=self.counter,
+                                        #scatter=plot_scatter,
                                         plot2D=plot_2D,
                                         legend=bool(self.plot_legend_var.get()),
                                         legend_features=tuple(legend_features),
@@ -1123,11 +1177,11 @@ class CorrectionsPanel(ttk.Frame):
                                         x_offset=offset, y_offset=offset2, colormap=cmap,
                                         font_size=int(service.get_service_parameter("FONT_SIZE")))
         else:
-
             self.winfo_toplevel().gui_widgets["PlotPanel"].clear_figure()
             self.winfo_toplevel().gui_widgets["PlotPanel"].plot_regions(self.regions_in_work,
                                                                         add_dimension=plot_add_dim,
-                                                                        scatter=plot_scatter,
+                                                                        counter=self.counter,
+                                                                        #scatter=plot_scatter,
                                                                         plot2D=plot_2D,
                                                                         legend=bool(self.plot_legend_var.get()),
                                                                         legend_features=tuple(legend_features),
@@ -1135,6 +1189,69 @@ class CorrectionsPanel(ttk.Frame):
                                                                         x_offset=offset, y_offset=offset2, colormap=cmap,
                                                                         font_size=int(service.get_service_parameter("FONT_SIZE")))
 
+
+
+    def _plot(self):
+        self.regions_in_work = self._get_regions_in_work()
+        if not self.regions_in_work:
+            return
+        legend_options = ";".join([self.plot_legend_fn_var.get()])#, self.plot_legend_rn_var.get(), self.plot_legend_con_var.get()])
+        service.set_init_parameters("LEGEND", legend_options)
+        print('MY SLIDER::::::::::', self.offset_slider2.get() )
+        print('MY rounded SLIDER::::::::::', np.round(self.offset_slider2.get()))
+        offset = (np.round(self.offset_slider2.get()) / 10)
+        offset2 = (self.offset_slider.get() / 100) * max([np.max(region.get_data(column='final'))
+                                                         for region in self.regions_in_work if
+                                                         len(region.get_data(column='final')) > 0])
+
+        scale = self.scale_slider.get()/100
+        print('this is when i get the scale')
+        print(scale)
+        cmap = None if self.select_colormap.get() == "Default colormap" else self.select_colormap.get()
+        legend_features = self._get_legend_features()
+        plot_add_dim = bool(self.plot_add_dim_var.get())
+        plot_2D = bool(self.plot_2D_var.get())
+        #plot_scatter = bool(self.scatter_var.get())
+        #if plot_scatter and plot_2D and plot_add_dim and len(self.regions_in_work) == 1:
+        #    self.winfo_toplevel().display_message("Choose either 'scatter' or '2D plot' mode.")
+        #    return
+        #elif plot_scatter and plot_2D and (not plot_add_dim or len(self.regions_in_work) > 1):
+        #    plot_2D = False
+        #elif plot_add_dim and plot_2D and len(self.regions_in_work) > 1:
+        #    self.winfo_toplevel().display_message("Can't make 2D plot for more than 1 scan at the same time.")
+        #    plot_2D = False
+        if not plot_add_dim:
+            plot_2D = False
+        self.counter += 1
+        print('this is my counter')
+        print(self.counter)
+        if bool(self.plot_separate_var.get()):
+            new_plot_window = tk.Toplevel(self.winfo_toplevel())
+            new_plot_window.wm_title("Raw data Joker")
+            new_plot_panel = PlotPanel(new_plot_window, label=None, borderwidth=1, relief="groove")
+            new_plot_panel.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+            new_plot_panel.plot_regions(self.regions_in_work,
+                                        counter=self.counter,
+                                        add_dimension=plot_add_dim,
+                                        #scatter=plot_scatter,
+                                        plot2D=plot_2D,
+                                        legend=bool(self.plot_legend_var.get()),
+                                        legend_features=tuple(legend_features),
+                                        #title=bool(self.plot_title_var.get()),
+                                        x_offset=offset, y_offset=offset2, scale=scale, colormap=cmap,
+                                        font_size=int(service.get_service_parameter("FONT_SIZE")))
+        else:
+            self.winfo_toplevel().gui_widgets["PlotPanel"].clear_figure()
+            self.winfo_toplevel().gui_widgets["PlotPanel"].plot_regions(self.regions_in_work,
+                                                                        counter = self.counter,
+                                                                        add_dimension=plot_add_dim,
+                                                                        #scatter=plot_scatter,
+                                                                        plot2D=plot_2D,
+                                                                        legend=bool(self.plot_legend_var.get()),
+                                                                        legend_features=tuple(legend_features),
+                                                                        #title=bool(self.plot_title_var.get()),
+                                                                        x_offset=offset, y_offset=offset2, scale=scale, colormap=cmap,
+                                                                        font_size=int(service.get_service_parameter("FONT_SIZE")))
     def _save(self):
         if self.regions_in_work:
             output_dir = filedialog.askdirectory(title="Choose directory for saving",
@@ -1181,7 +1298,6 @@ class CorrectionsPanel(ttk.Frame):
                     except (IOError, OSError):
                         gui_logger.error(f"Couldn't save file {sqr_file_path}", exc_info=True)
                         self.winfo_toplevel().display_message(f"Couldn't save file {sqr_file_path}")
-
                 output_dir = os.path.dirname(dat_file_path)
             service.set_init_parameters("DEFAULT_OUTPUT_FOLDER", output_dir)
 
@@ -1586,6 +1702,9 @@ class FitWindow(tk.Toplevel):
         toppanel = ttk.Frame(self, borderwidth=1, relief="groove")
         # Right panel for plotting
         self.plot_panel = PlotPanel(toppanel, label=None, borderwidth=10, relief="groove")
+        #w.pack()
+        #w = Scale(self.plot_panel, from_=0, to=42)
+        #w.pack()
         self.plot_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         # Left panel for fitting settings
         self.fit_settings_panel = ttk.Frame(toppanel, borderwidth=100, relief="groove")
@@ -2894,7 +3013,7 @@ class Root(tk.Tk):
         self.help_menu = tk.Menu(self.main_menu_bar, tearoff=0)
         self.generate_main_menu()
 
-        tk.Tk.wm_title(self, "Addition & Subtraction, R.D., Based on specQP")
+        tk.Tk.wm_title(self, "JRC rE-IMAGINE SPECTRA SUBTRACTION JESS Software")
         self.main_window = MainWindow(self, orient=tk.HORIZONTAL)
         self.main_window.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         # Bottom panel for output
@@ -3007,7 +3126,7 @@ class Root(tk.Tk):
                                    command=lambda: self._do_regions_math(math='Reversed subtract'))
         # self.file_menu.add_separator()
         # self.math_menu.add_command(label="Concatenate", command=lambda: self._concatenate_regions)
-        self.main_menu_bar.add_cascade(label="Subtract or Add Spectra", menu=self.math_menu)
+        # self.main_menu_bar.add_cascade(label="Subtract or Add Spectra", menu=self.math_menu)
 
         # Help menu
         #self.help_menu.add_command(label="Export log", command=self.export_log)
@@ -3133,6 +3252,8 @@ class Root(tk.Tk):
                 if val:
                     self.gui_widgets["BrowserPanel"].spectra_tree_panel.add_items_to_check_list(os.path.basename(key), val)
                     last_region_id = val[0]
+                    print('this is my self gui widget2')
+                    print(self.gui_widgets)
                 else:
                     if key in self.loaded_regions.get_ids():
                         gui_logger.warning(f"No regions loaded from {key}")
@@ -3159,7 +3280,7 @@ class Root(tk.Tk):
             service.set_init_parameters("PLOT_ASPECT_RATIO", aspect_ratio)
             self.display_message(f"[Height = {aspect_ratio} * width] was set as the default aspect ratio for plots.")
         else:
-            service.set_init_parameters("PLOT_ASPECT_RATIO", 0.75)
+            service.set_init_parameters("PLOT_ASPECT_RATIO", 1)
             self.display_message("No aspect ratio value received. Default aspect ratio [height = 0.75 * width] was set for plots.")
 
     def _set_plot_font_size(self):
@@ -3168,7 +3289,7 @@ class Root(tk.Tk):
             service.set_init_parameters("FONT_SIZE", fontsize)
             self.display_message(f"{fontsize}pt was set as the default font size for plots.")
         else:
-            service.set_init_parameters("FONT_SIZE", 12)
+            service.set_init_parameters("FONT_SIZE", 10)
             self.display_message("No font size value received. Default font size for plotting was set to 12pt.")
 
     #def show_about(self):
